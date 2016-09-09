@@ -151,12 +151,20 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
             httpContext
                 .Setup(hc => hc.Response.Cookies)
                 .Returns(responseCookies);
+            httpContext
+                .Setup(hc => hc.Response.Headers)
+                .Returns(new HeaderDictionary());
 
             // Act
             tempDataProvider.SaveTempData(httpContext.Object, new Dictionary<string, object>());
 
             // Assert
-            Assert.Equal(0, responseCookies.Count);
+            Assert.Equal(1, responseCookies.Count);
+            var cookie = responseCookies[CookieTempDataProvider.CookieName];
+            Assert.NotNull(cookie);
+            Assert.Equal(string.Empty, cookie.Value);
+            Assert.NotNull(cookie.Options.Expires);
+            Assert.True(cookie.Options.Expires.Value < DateTimeOffset.Now); // expired cookie
         }
 
         [Fact]
