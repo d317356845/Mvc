@@ -7,11 +7,11 @@ using Xunit;
 
 namespace Microsoft.AspNetCore.Mvc.FunctionalTests
 {
-    public class TempDataTest : IClassFixture<MvcTestFixture<BasicWebSite.Startup>>
+    public class TempDataInSessionTest : IClassFixture<MvcTestFixture<BasicWebSite.Startup>>
     {
         private readonly TempDataCommon _tempDataCommonTest;
 
-        public TempDataTest(MvcTestFixture<BasicWebSite.Startup> fixture)
+        public TempDataInSessionTest(MvcTestFixture<BasicWebSite.Startup> fixture)
         {
             _tempDataCommonTest = new TempDataCommon(fixture.Client);
         }

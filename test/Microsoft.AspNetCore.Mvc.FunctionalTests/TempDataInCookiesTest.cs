@@ -10,11 +10,11 @@ using Xunit;
 
 namespace Microsoft.AspNetCore.Mvc.FunctionalTests
 {
-    public class TempDataWithCookieTempDataProviderTest : IClassFixture<MvcTestFixture<BasicWebSite.StartupWithCookieTempDataProvider>>
+    public class TempDataInCookiesTest : IClassFixture<MvcTestFixture<BasicWebSite.StartupWithCookieTempDataProvider>>
     {
         private readonly TempDataCommon _tempDataCommon;
 
-        public TempDataWithCookieTempDataProviderTest(MvcTestFixture<BasicWebSite.StartupWithCookieTempDataProvider> fixture)
+        public TempDataInCookiesTest(MvcTestFixture<BasicWebSite.StartupWithCookieTempDataProvider> fixture)
         {
             Client = fixture.Client;
             _tempDataCommon = new TempDataCommon(Client);
@@ -80,7 +80,7 @@ namespace Microsoft.AspNetCore.Mvc.FunctionalTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             // Act 2
-            response = await Client.SendAsync(_tempDataCommon.GetRequest("TempData/GetLargeValueFromTempData", response));
+            response = await Client.SendAsync(_tempDataCommon.GetRequest("/TempData/GetLargeValueFromTempData", response));
 
             // Assert 2
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -88,7 +88,7 @@ namespace Microsoft.AspNetCore.Mvc.FunctionalTests
             Assert.Equal(expected, body);
 
             // Act 3
-            response = await Client.SendAsync(_tempDataCommon.GetRequest("TempData/GetLargeValueFromTempData", response));
+            response = await Client.SendAsync(_tempDataCommon.GetRequest("/TempData/GetLargeValueFromTempData", response));
 
             // Assert 3
             Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);

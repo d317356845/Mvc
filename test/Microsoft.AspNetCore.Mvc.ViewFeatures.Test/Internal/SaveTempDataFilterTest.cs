@@ -1,5 +1,5 @@
 // Copyright (c) .NET Foundation. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.v
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
 using System.Threading.Tasks;
@@ -55,15 +55,15 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures.Internal
         public async Task OnResultExecuting_DoesNotSaveTempData_WhenTempDataAlreadySaved()
         {
             // Arrange
+            var responseFeature = new TestResponseFeature();
+            var httpContext = GetHttpContext(responseFeature);
+            httpContext.Items[SaveTempDataFilter.TempDataSavedKey] = true; // indicate that tempdata was already saved
             var tempDataFactory = new Mock<ITempDataDictionaryFactory>(MockBehavior.Strict);
             tempDataFactory
                 .Setup(f => f.GetTempData(It.IsAny<HttpContext>()))
                 .Verifiable();
             var filter = new SaveTempDataFilter(tempDataFactory.Object);
-            var responseFeature = new TestResponseFeature();
-            var httpContext = GetHttpContext(responseFeature);
-            var context = GetResultExecutingContext(httpContext, new TestKeepTempDataActionResult());
-            httpContext.Items[SaveTempDataFilter.TempDataSavedKey] = true; // indicate that tempdata was already saved
+            var context = GetResultExecutingContext(httpContext);
             filter.OnResultExecuting(context); // registers callback
 
             // Act
@@ -166,7 +166,7 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures.Internal
         }
 
         [Fact]
-        public void OnResultExecuted_KeepsTempData_ForIKeepTempDataResultOnly()
+        public void OnResultExecuted_KeepsTempData_ForIKeepTempDataResult()
         {
             // Arrange
             var tempDataDictionary = GetTempDataDictionary();

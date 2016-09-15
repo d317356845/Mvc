@@ -37,7 +37,7 @@ namespace Microsoft.AspNetCore.Mvc.FunctionalTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             // Act 2
-            response = await Client.SendAsync(GetRequest("TempData/GetTempData", response));
+            response = await Client.SendAsync(GetRequest("/TempData/GetTempData", response));
 
             // Assert 2
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -45,7 +45,7 @@ namespace Microsoft.AspNetCore.Mvc.FunctionalTests
             Assert.Equal("Foo", body);
 
             // Act 3
-            response = await Client.SendAsync(GetRequest("TempData/GetTempData", response));
+            response = await Client.SendAsync(GetRequest("/TempData/GetTempData", response));
 
             // Assert 3
             Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
@@ -178,7 +178,7 @@ namespace Microsoft.AspNetCore.Mvc.FunctionalTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             // Act 2
-            response = await Client.SendAsync(GetRequest("TempData/GetTempDataInActionResult", response));
+            response = await Client.SendAsync(GetRequest("/TempData/GetTempDataSetInActionResult", response));
 
             // Assert 2
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -186,7 +186,7 @@ namespace Microsoft.AspNetCore.Mvc.FunctionalTests
             Assert.Equal("Michael", body);
 
             // Act 3
-            response = await Client.SendAsync(GetRequest("TempData/GetTempDataInActionResult", response));
+            response = await Client.SendAsync(GetRequest("/TempData/GetTempDataSetInActionResult", response));
 
             // Assert 3
             Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
@@ -200,7 +200,7 @@ namespace Microsoft.AspNetCore.Mvc.FunctionalTests
             {
                 foreach (var cookie in SetCookieHeaderValue.ParseList(values.ToList()))
                 {
-                    if (cookie.Expires == null || cookie.Expires >= DateTimeOffset.Now)
+                    if (cookie.Expires == null || cookie.Expires >= DateTimeOffset.UtcNow)
                     {
                         request.Headers.Add("Cookie", new CookieHeaderValue(cookie.Name, cookie.Value).ToString());
                     }

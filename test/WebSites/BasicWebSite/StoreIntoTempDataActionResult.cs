@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace BasicWebSite
 {
-    public class TestTempDataActionResult : IActionResult
+    public class StoreIntoTempDataActionResult : IActionResult
     {
         public Task ExecuteResultAsync(ActionContext context)
         {
@@ -19,7 +19,7 @@ namespace BasicWebSite
             var tempDataDictionary = tempDataDictionaryFactory.GetTempData(httpContext);
             tempDataDictionary["Name"] = "Michael";
 
-            return httpContext.Response.WriteAsync($"Hello from {nameof(TestTempDataActionResult)}");
+            return httpContext.Response.WriteAsync($"Hello from {nameof(StoreIntoTempDataActionResult)}");
         }
     }
 }

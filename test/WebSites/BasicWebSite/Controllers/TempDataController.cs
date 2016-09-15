@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Internal;
 
 namespace BasicWebSite.Controllers
 {
@@ -73,11 +72,11 @@ namespace BasicWebSite.Controllers
         [HttpGet]
         public IActionResult SetTempDataInActionResult()
         {
-            return new TestTempDataActionResult();
+            return new StoreIntoTempDataActionResult();
         }
 
         [HttpGet]
-        public string GetTempDataInActionResult()
+        public string GetTempDataSetInActionResult()
         {
             return TempData["Name"]?.ToString();
         }
