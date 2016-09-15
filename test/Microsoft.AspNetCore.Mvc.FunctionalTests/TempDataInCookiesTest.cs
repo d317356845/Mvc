@@ -12,6 +12,7 @@ namespace Microsoft.AspNetCore.Mvc.FunctionalTests
 {
     public class TempDataInCookiesTest : IClassFixture<MvcTestFixture<BasicWebSite.StartupWithCookieTempDataProvider>>
     {
+        private const int DefaultChunkSize = 4070;
         private readonly TempDataCommon _tempDataCommon;
 
         public TempDataInCookiesTest(MvcTestFixture<BasicWebSite.StartupWithCookieTempDataProvider> fixture)
@@ -63,10 +64,10 @@ namespace Microsoft.AspNetCore.Mvc.FunctionalTests
         }
 
         [Theory]
-        [InlineData(ChunkingCookieManager.DefaultChunkSize)]
-        [InlineData(ChunkingCookieManager.DefaultChunkSize * 1.5)]
-        [InlineData(ChunkingCookieManager.DefaultChunkSize * 2)]
-        [InlineData(ChunkingCookieManager.DefaultChunkSize * 3)]
+        [InlineData(DefaultChunkSize)]
+        [InlineData(DefaultChunkSize * 1.5)]
+        [InlineData(DefaultChunkSize * 2)]
+        [InlineData(DefaultChunkSize * 3)]
         public async Task RoundTripLargeData_WorksWithChunkingCookies(int size)
         {
             // Arrange
