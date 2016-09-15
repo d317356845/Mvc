@@ -104,6 +104,40 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures.Internal
             testProvider.EnsureObjectCanBeSerialized(value);
         }
 
+        [Fact]
+        public void DeserializeTempData_ReturnsEmptyDictionary_DataIsEmpty()
+        {
+            // Arrange
+            var serializer = new TempDataSerializer();
+
+            // Act
+            var tempDataDictionary = serializer.DeserializeTempData(new byte[0]);
+
+            // Assert
+            Assert.NotNull(tempDataDictionary);
+            Assert.Empty(tempDataDictionary);
+        }
+
+        [Fact]
+        public void SerializeAndDeserialize_NullValue_RoundTripsSuccessfully()
+        {
+            // Arrange
+            var key = "NullKey";
+            var testProvider = new TempDataSerializer();
+            var input = new Dictionary<string, object>
+             {
+                 { key, null }
+             };
+
+            // Act
+            var bytes = testProvider.SerializeTempData(input);
+            var values = testProvider.DeserializeTempData(bytes);
+
+            // Assert
+            Assert.True(values.ContainsKey(key));
+            Assert.Null(values[key]);
+        }
+
         private class TestItem
         {
             public int DummyInt { get; set; }

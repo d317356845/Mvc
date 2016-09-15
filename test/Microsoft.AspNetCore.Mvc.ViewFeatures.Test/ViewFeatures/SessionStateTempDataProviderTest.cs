@@ -275,41 +275,6 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
             Assert.Null(emptyDictionary);
         }
 
-        [Fact]
-        public void Load_ReturnsEmptyDictionary_WhenSessionDataIsEmpty()
-        {
-            // Arrange
-            var testProvider = new SessionStateTempDataProvider();
-            var httpContext = GetHttpContext();
-            httpContext.Session.Set(SessionStateTempDataProvider.TempDataSessionStateKey, new byte[] { });
-
-            // Act
-            var tempDataDictionary = testProvider.LoadTempData(httpContext);
-
-            // Assert
-            Assert.Empty(tempDataDictionary);
-        }
-
-        [Fact]
-        public void SaveAndLoad_NullValue_RoundTripsSuccessfully()
-        {
-            // Arrange
-            var testProvider = new SessionStateTempDataProvider();
-            var input = new Dictionary<string, object>
-             {
-                 { "NullKey", null }
-             };
-            var context = GetHttpContext();
-
-            // Act
-            testProvider.SaveTempData(context, input);
-            var TempData = testProvider.LoadTempData(context);
-
-            // Assert
-            Assert.True(TempData.ContainsKey("NullKey"));
-            Assert.Null(TempData["NullKey"]);
-        }
-
         private class TestItem
         {
             public int DummyInt { get; set; }
