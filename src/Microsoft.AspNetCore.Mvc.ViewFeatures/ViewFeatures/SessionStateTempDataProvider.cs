@@ -13,7 +13,8 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
     /// </summary>
     public class SessionStateTempDataProvider : ITempDataProvider
     {
-        private const string TempDataSessionStateKey = "__ControllerTempData";
+        // Internal for testing
+        internal const string TempDataSessionStateKey = "__ControllerTempData";
         private TempDataSerializer _tempDataSerializer;
 
         public SessionStateTempDataProvider()
@@ -35,6 +36,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
             byte[] value;
             if (session.TryGetValue(TempDataSessionStateKey, out value))
             {
+                // If we got it from Session, remove it so that no other request gets it
+                session.Remove(TempDataSessionStateKey);
+
                 return _tempDataSerializer.DeserializeTempData(value);
             }
 

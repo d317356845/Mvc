@@ -47,11 +47,16 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures.Internal
 
         public IDictionary<string, object> DeserializeTempData(byte[] value)
         {
-            var tempDataDictionary = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, object> tempDataDictionary = null;
+
             using (var memoryStream = new MemoryStream(value))
             using (var writer = new BsonReader(memoryStream))
             {
                 tempDataDictionary = _jsonSerializer.Deserialize<Dictionary<string, object>>(writer);
+                if (tempDataDictionary == null)
+                {
+                    return new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                }
             }
 
             var convertedDictionary = new Dictionary<string, object>(
@@ -123,7 +128,7 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures.Internal
                 }
             }
 
-            return convertedDictionary;
+            return convertedDictionary ?? new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
         }
 
         public byte[] SerializeTempData(IDictionary<string, object> values)
@@ -133,8 +138,11 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures.Internal
             {
                 foreach (var item in values.Values)
                 {
-                    // We want to allow only simple types to be serialized.
-                    EnsureObjectCanBeSerialized(item);
+                    if (item != null)
+                    {
+                        // We want to allow only simple types to be serialized.
+                        EnsureObjectCanBeSerialized(item);
+                    }
                 }
 
                 using (var memoryStream = new MemoryStream())
