@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Internal;
 using Microsoft.AspNetCore.Mvc.ViewFeatures.Internal;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Mvc.ViewFeatures
 {
@@ -18,12 +19,14 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
         private readonly IDataProtector _dataProtector;
         private TempDataSerializer _tempDataSerializer;
         private readonly ChunkingCookieManager _chunkingCookieManager;
+        private readonly IOptions<CookieTempDataProviderOptions> _options;
 
-        public CookieTempDataProvider(IDataProtectionProvider dataProtectionProvider)
+        public CookieTempDataProvider(IDataProtectionProvider dataProtectionProvider, IOptions<CookieTempDataProviderOptions> options)
         {
             _dataProtector = dataProtectionProvider.CreateProtector(Purpose);
             _tempDataSerializer = new TempDataSerializer();
             _chunkingCookieManager = new ChunkingCookieManager();
+            _options = options;
         }
 
         public IDictionary<string, object> LoadTempData(HttpContext context)
@@ -57,7 +60,8 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
 
             var cookieOptions = new CookieOptions()
             {
-                Path = context.Request.PathBase,
+                Path = string.IsNullOrEmpty(_options.Value.Path) ? context.Request.PathBase.ToString() : _options.Value.Path,
+                Domain = string.IsNullOrEmpty(_options.Value.Domain) ? null : _options.Value.Domain,
                 HttpOnly = true,
                 Secure = true
             };

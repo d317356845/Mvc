@@ -19,7 +19,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
         public void LoadTempData_ReturnsEmptyDictionary_WhenNoCookieDataIsAvailable()
         {
             // Arrange
-            var tempDataProvider = new CookieTempDataProvider(new PassThroughDataProtectionProvider(new PassThroughDataProtector()));
+            var tempDataProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(new PassThroughDataProtector()),
+                new CookieTempDataProviderOptions());
 
             // Act
             var tempDataDictionary = tempDataProvider.LoadTempData(new DefaultHttpContext());
@@ -38,7 +40,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
             var expectedDataToUnprotect = tempDataProviderSerializer.SerializeTempData(expectedValues);
             var base64EncodedDataInCookie = Convert.ToBase64String(expectedDataToUnprotect);
             var dataProtector = new PassThroughDataProtector();
-            var tempDataProvider = new CookieTempDataProvider(new PassThroughDataProtectionProvider(dataProtector));
+            var tempDataProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(dataProtector),
+                new CookieTempDataProviderOptions());
             var requestCookies = new RequestCookieCollection(new Dictionary<string, string>()
             {
                 { CookieTempDataProvider.CookieName, base64EncodedDataInCookie }
@@ -66,7 +70,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
             var expectedDataToProtect = tempDataProviderStore.SerializeTempData(values);
             var expectedDataInCookie = Convert.ToBase64String(expectedDataToProtect);
             var dataProtector = new PassThroughDataProtector();
-            var tempDataProvider = new CookieTempDataProvider(new PassThroughDataProtectionProvider(dataProtector));
+            var tempDataProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(dataProtector),
+                new CookieTempDataProviderOptions());
             var responseCookies = new MockResponseCookieCollection();
             var httpContext = new Mock<HttpContext>();
             httpContext
@@ -90,7 +96,7 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
         [Theory]
         [InlineData("/")]
         [InlineData("/vdir1")]
-        public void SaveTempData_SetsCookie_WithAppropriateCookieOptions(string pathBase)
+        public void SaveTempData_DefaultProviderOptions_SetsCookie_WithAppropriateCookieOptions(string pathBase)
         {
             // Arrange
             var values = new Dictionary<string, object>();
@@ -99,7 +105,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
             var expectedDataToProtect = tempDataProviderStore.SerializeTempData(values);
             var expectedDataInCookie = Convert.ToBase64String(expectedDataToProtect);
             var dataProtector = new PassThroughDataProtector();
-            var tempDataProvider = new CookieTempDataProvider(new PassThroughDataProtectionProvider(dataProtector));
+            var tempDataProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(dataProtector),
+                new CookieTempDataProviderOptions());
             var responseCookies = new MockResponseCookieCollection();
             var httpContext = new Mock<HttpContext>();
             httpContext
@@ -125,6 +133,49 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
             Assert.Null(cookieInfo.Options.Domain);
         }
 
+        [Theory]
+        [InlineData("/", null, null, "/", null)]
+        [InlineData("/", "/vdir1", null, "/vdir1", null)]
+        [InlineData("/", "/vdir1", ".abc.com", "/vdir1", ".abc.com")]
+        [InlineData("/vdir1", "/", ".abc.com", "/", ".abc.com")]
+        public void SaveTempData_CustomProviderOptions_SetsCookie_WithAppropriateCookieOptions(
+            string requestPathBase, string optionsPath, string optionsDomain, string expectedCookiePath, string expectedDomain)
+        {
+            // Arrange
+            var values = new Dictionary<string, object>();
+            values.Add("int", 10);
+            var tempDataProviderStore = new TempDataSerializer();
+            var expectedDataToProtect = tempDataProviderStore.SerializeTempData(values);
+            var expectedDataInCookie = Convert.ToBase64String(expectedDataToProtect);
+            var dataProtector = new PassThroughDataProtector();
+            var tempDataProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(dataProtector),
+                new CookieTempDataProviderOptions() { Path = optionsPath, Domain = optionsDomain });
+            var responseCookies = new MockResponseCookieCollection();
+            var httpContext = new Mock<HttpContext>();
+            httpContext
+                .SetupGet(hc => hc.Request.PathBase)
+                .Returns(requestPathBase);
+            httpContext
+                .Setup(hc => hc.Response.Cookies)
+                .Returns(responseCookies);
+
+            // Act
+            tempDataProvider.SaveTempData(httpContext.Object, values);
+
+            // Assert
+            Assert.Equal(1, responseCookies.Count);
+            var cookieInfo = responseCookies[CookieTempDataProvider.CookieName];
+            Assert.NotNull(cookieInfo);
+            Assert.Equal(expectedDataInCookie, cookieInfo.Value);
+            Assert.Equal(expectedDataToProtect, dataProtector.PlainTextToProtect);
+            Assert.Equal(expectedCookiePath, cookieInfo.Options.Path);
+            Assert.Equal(expectedDomain, cookieInfo.Options.Domain);
+            Assert.True(cookieInfo.Options.Secure);
+            Assert.True(cookieInfo.Options.HttpOnly);
+            Assert.Null(cookieInfo.Options.Expires);
+        }
+
         [Fact]
         public void SaveTempData_RemovesCookie_WhenNoDataToSave()
         {
@@ -135,7 +186,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
             var serializedData = tempDataProviderStore.SerializeTempData(values);
             var base64EncodedData = Convert.ToBase64String(serializedData);
             var dataProtector = new PassThroughDataProtector();
-            var tempDataProvider = new CookieTempDataProvider(new PassThroughDataProtectionProvider(dataProtector));
+            var tempDataProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(dataProtector),
+                new CookieTempDataProviderOptions());
             var requestCookies = new RequestCookieCollection(new Dictionary<string, string>()
             {
                 { CookieTempDataProvider.CookieName, base64EncodedData }
@@ -171,7 +224,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
         public void SaveAndLoad_StringCanBeStoredAndLoaded()
         {
             // Arrange
-            var testProvider = new CookieTempDataProvider(new PassThroughDataProtectionProvider(new PassThroughDataProtector()));
+            var testProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(new PassThroughDataProtector()),
+                new CookieTempDataProviderOptions());
             var input = new Dictionary<string, object>
             {
                 { "string", "value" }
@@ -195,7 +250,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
         public void SaveAndLoad_IntCanBeStoredAndLoaded(int expected)
         {
             // Arrange
-            var testProvider = new CookieTempDataProvider(new PassThroughDataProtectionProvider(new PassThroughDataProtector()));
+            var testProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(new PassThroughDataProtector()),
+                new CookieTempDataProviderOptions());
             var input = new Dictionary<string, object>
             {
                 { "int", expected }
@@ -218,7 +275,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
         public void SaveAndLoad_BoolCanBeStoredAndLoaded(bool value)
         {
             // Arrange
-            var testProvider = new CookieTempDataProvider(new PassThroughDataProtectionProvider(new PassThroughDataProtector()));
+            var testProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(new PassThroughDataProtector()),
+                new CookieTempDataProviderOptions());
             var input = new Dictionary<string, object>
             {
                 { "bool", value }
@@ -239,7 +298,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
         public void SaveAndLoad_DateTimeCanBeStoredAndLoaded()
         {
             // Arrange
-            var testProvider = new CookieTempDataProvider(new PassThroughDataProtectionProvider(new PassThroughDataProtector()));
+            var testProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(new PassThroughDataProtector()),
+                new CookieTempDataProviderOptions());
             var inputDatetime = new DateTime(2010, 12, 12, 1, 2, 3, DateTimeKind.Local);
             var input = new Dictionary<string, object>
             {
@@ -261,7 +322,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
         public void SaveAndLoad_GuidCanBeStoredAndLoaded()
         {
             // Arrange
-            var testProvider = new CookieTempDataProvider(new PassThroughDataProtectionProvider(new PassThroughDataProtector()));
+            var testProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(new PassThroughDataProtector()),
+                new CookieTempDataProviderOptions());
             var inputGuid = Guid.NewGuid();
             var input = new Dictionary<string, object>
             {
@@ -284,7 +347,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
         {
             // Arrange
             var key = "EnumValue";
-            var testProvider = new CookieTempDataProvider(new PassThroughDataProtectionProvider(new PassThroughDataProtector()));
+            var testProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(new PassThroughDataProtector()),
+                new CookieTempDataProviderOptions());
             var expected = DayOfWeek.Friday;
             var input = new Dictionary<string, object>
             {
@@ -310,7 +375,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
         {
             // Arrange
             var key = "LongValue";
-            var testProvider = new CookieTempDataProvider(new PassThroughDataProtectionProvider(new PassThroughDataProtector()));
+            var testProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(new PassThroughDataProtector()),
+                new CookieTempDataProviderOptions());
             var input = new Dictionary<string, object>
             {
                 { key, expected }
@@ -332,7 +399,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
         public void SaveAndLoad_ListCanBeStoredAndLoaded()
         {
             // Arrange
-            var testProvider = new CookieTempDataProvider(new PassThroughDataProtectionProvider(new PassThroughDataProtector()));
+            var testProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(new PassThroughDataProtector()),
+                new CookieTempDataProviderOptions());
             var input = new Dictionary<string, object>
             {
                 { "List`string", new List<string> { "one", "two" } }
@@ -355,7 +424,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
         public void SaveAndLoad_DictionaryCanBeStoredAndLoaded()
         {
             // Arrange
-            var testProvider = new CookieTempDataProvider(new PassThroughDataProtectionProvider(new PassThroughDataProtector()));
+            var testProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(new PassThroughDataProtector()),
+                new CookieTempDataProviderOptions());
             var inputDictionary = new Dictionary<string, string>
             {
                 { "Hello", "World" },
@@ -380,7 +451,9 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
         public void SaveAndLoad_EmptyDictionary_RoundTripsAsNull()
         {
             // Arrange
-            var testProvider = new CookieTempDataProvider(new PassThroughDataProtectionProvider(new PassThroughDataProtector()));
+            var testProvider = new CookieTempDataProvider(
+                new PassThroughDataProtectionProvider(new PassThroughDataProtector()),
+                new CookieTempDataProviderOptions());
             var input = new Dictionary<string, object>
             {
                 { "EmptyDictionary", new Dictionary<string, int>() }
