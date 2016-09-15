@@ -192,19 +192,20 @@ namespace Microsoft.AspNetCore.Mvc.FunctionalTests
             Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         }
 
-        private HttpRequestMessage GetRequest(string path, HttpResponseMessage response)
+        public HttpRequestMessage GetRequest(string path, HttpResponseMessage response)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, path);
             IEnumerable<string> values;
             if (response.Headers.TryGetValues("Set-Cookie", out values))
             {
-                var cookie = SetCookieHeaderValue.ParseList(values.ToList()).First();
-                if (cookie.Expires == null || cookie.Expires >= DateTimeOffset.Now)
+                foreach (var cookie in SetCookieHeaderValue.ParseList(values.ToList()))
                 {
-                    request.Headers.Add("Cookie", new CookieHeaderValue(cookie.Name, cookie.Value).ToString());
+                    if (cookie.Expires == null || cookie.Expires >= DateTimeOffset.Now)
+                    {
+                        request.Headers.Add("Cookie", new CookieHeaderValue(cookie.Name, cookie.Value).ToString());
+                    }
                 }
             }
-
             return request;
         }
     }

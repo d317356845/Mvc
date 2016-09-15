@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Internal;
 using Microsoft.AspNetCore.Mvc.ViewFeatures.Internal;
 
 namespace Microsoft.AspNetCore.Mvc.ViewFeatures
@@ -16,11 +17,13 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
         private const byte TokenVersion = 0x01;
         private readonly IDataProtector _dataProtector;
         private TempDataSerializer _tempDataSerializer;
+        private readonly ChunkingCookieManager _chunkingCookieManager;
 
         public CookieTempDataProvider(IDataProtectionProvider dataProtectionProvider)
         {
             _dataProtector = dataProtectionProvider.CreateProtector(Purpose);
             _tempDataSerializer = new TempDataSerializer();
+            _chunkingCookieManager = new ChunkingCookieManager();
         }
 
         public IDictionary<string, object> LoadTempData(HttpContext context)
@@ -31,12 +34,15 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
             }
 
             IDictionary<string, object> values = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            string base64EncodedValue;
-            if (context.Request.Cookies.TryGetValue(CookieName, out base64EncodedValue))
+            if (context.Request.Cookies.ContainsKey(CookieName))
             {
-                var protectedData = Convert.FromBase64String(base64EncodedValue);
-                var unprotectedData = _dataProtector.Unprotect(protectedData);
-                values = _tempDataSerializer.DeserializeTempData(unprotectedData);
+                var base64EncodedValue = _chunkingCookieManager.GetRequestCookie(context, CookieName);
+                if (!string.IsNullOrEmpty(base64EncodedValue))
+                {
+                    var protectedData = Convert.FromBase64String(base64EncodedValue);
+                    var unprotectedData = _dataProtector.Unprotect(protectedData);
+                    values = _tempDataSerializer.DeserializeTempData(unprotectedData);
+                }
             }
 
             return values;
@@ -61,12 +67,12 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures
             {
                 var bytes = _tempDataSerializer.SerializeTempData(values);
                 bytes = _dataProtector.Protect(bytes);
-
-                context.Response.Cookies.Append(CookieName, Convert.ToBase64String(bytes), cookieOptions);
+                var base64EncodedValue = Convert.ToBase64String(bytes);
+                _chunkingCookieManager.AppendResponseCookie(context, CookieName, base64EncodedValue, cookieOptions);
             }
             else
             {
-                context.Response.Cookies.Delete(CookieName, cookieOptions);
+                _chunkingCookieManager.DeleteCookie(context, CookieName, cookieOptions);
             }
         }
     }

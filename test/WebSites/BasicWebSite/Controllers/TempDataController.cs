@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Internal;
 
 namespace BasicWebSite.Controllers
 {
@@ -79,6 +80,19 @@ namespace BasicWebSite.Controllers
         public string GetTempDataInActionResult()
         {
             return TempData["Name"]?.ToString();
+        }
+
+        [HttpGet]
+        public IActionResult SetLargeValueInTempData(int size, char character)
+        {
+            TempData["LargeValue"] = new string(character, size);
+            return Ok();
+        }
+
+        [HttpGet]
+        public string GetLargeValueFromTempData()
+        {
+            return TempData["LargeValue"]?.ToString();
         }
     }
 }
