@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "Microsoft.AspNetCore.Antiforgery": "1.1.0-*",
-    "Microsoft.AspNetCore.Cookies.ChunkingCookieManager.Sources": {
+    "Microsoft.AspNetCore.ChunkingCookieManager.Sources": {
       "version": "1.1.0-*",
       "type": "build"
     },
