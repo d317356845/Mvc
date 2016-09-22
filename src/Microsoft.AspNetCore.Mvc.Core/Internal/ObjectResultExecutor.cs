@@ -142,7 +142,18 @@ namespace Microsoft.AspNetCore.Mvc.Internal
                 objectType,
                 result.Value);
 
-            var selectedFormatter = SelectFormatter(formatterContext, result.ContentTypes, formatters);
+            IOutputFormatter selectedFormatter = null;
+            try
+            {
+                selectedFormatter = SelectFormatter(formatterContext, result.ContentTypes, formatters);
+            }
+            catch (InvalidOperationException e)
+            {
+                Logger.InvalidAcceptHeader(formatterContext, e);
+                context.HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+                return TaskCache.CompletedTask;
+            }
+
             if (selectedFormatter == null)
             {
                 // No formatter supports this.
@@ -193,7 +204,12 @@ namespace Microsoft.AspNetCore.Mvc.Internal
             }
 
             var request = formatterContext.HttpContext.Request;
-            var acceptableMediaTypes = GetAcceptableMediaTypes(contentTypes, request);
+            List<MediaTypeSegmentWithQuality> acceptableMediaTypes = new List<MediaTypeSegmentWithQuality>();
+            if (!TryGetAcceptableMediaTypes(contentTypes, request, acceptableMediaTypes))
+            {
+                throw new InvalidOperationException("Unable to parse the accept header.");
+            }
+
             var selectFormatterWithoutRegardingAcceptHeader = false;
             IOutputFormatter selectedFormatter = null;
 
@@ -253,25 +269,27 @@ namespace Microsoft.AspNetCore.Mvc.Internal
             return selectedFormatter;
         }
 
-        private List<MediaTypeSegmentWithQuality> GetAcceptableMediaTypes(
+        private bool TryGetAcceptableMediaTypes(
             MediaTypeCollection contentTypes,
-            HttpRequest request)
+            HttpRequest request,
+            List<MediaTypeSegmentWithQuality> result)
         {
-            var result = new List<MediaTypeSegmentWithQuality>();
-            AcceptHeaderParser.ParseAcceptHeader(request.Headers[HeaderNames.Accept], result);
+            if (!AcceptHeaderParser.TryParseAcceptHeader(request.Headers[HeaderNames.Accept], result))
+            {
+                return false;
+            }
             for (int i = 0; i < result.Count; i++)
             {
                 var mediaType = new MediaType(result[i].MediaType);
                 if (!RespectBrowserAcceptHeader && mediaType.MatchesAllSubTypes && mediaType.MatchesAllTypes)
                 {
                     result.Clear();
-                    return result;
+                    return true;
                 }
             }
 
             result.Sort((left, right) => left.Quality > right.Quality ? -1 : (left.Quality == right.Quality ? 0 : 1));
-
-            return result;
+            return true;
         }
 
         /// <summary>

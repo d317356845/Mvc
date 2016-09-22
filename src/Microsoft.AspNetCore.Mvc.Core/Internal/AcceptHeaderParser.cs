@@ -18,6 +18,19 @@ namespace Microsoft.AspNetCore.Mvc.Formatters.Internal
             return parsedValues;
         }
 
+        public static bool TryParseAcceptHeader(IList<string> acceptHeaders, IList<MediaTypeSegmentWithQuality> values)
+        {
+            try
+            {
+                ParseAcceptHeader(acceptHeaders, values);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public static void ParseAcceptHeader(IList<string> acceptHeaders, IList<MediaTypeSegmentWithQuality> parsedValues)
         {
             if (acceptHeaders == null)

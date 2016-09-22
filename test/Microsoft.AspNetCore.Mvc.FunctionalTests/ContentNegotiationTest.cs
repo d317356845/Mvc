@@ -345,6 +345,24 @@ END:VCARD
         }
 
         [Theory]
+        [InlineData("text/html, image/gif, image/jpeg, ; q=.9, */; q=.1")]
+        [InlineData("text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2")]
+        [InlineData("text/html, image/gif, image/jpeg, ; q=.2, */; q=.2")]
+        public async Task ObjectResult_WithInvalidAcceptHeader_ReturnsBadRequest(string acceptHeader)
+        {
+            // Arrange
+            var targetUri = "http://localhost/Normal/ReturnUser/";
+            var request = new HttpRequestMessage(HttpMethod.Get, targetUri);
+            request.Headers.TryAddWithoutValidation("Accept", acceptHeader);
+
+            // Act
+            var response = await Client.SendAsync(request);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Theory]
         [InlineData(true)]
         [InlineData(false)]
         public async Task ObjectResult_WithStringReturnType_SetsMediaTypeToAccept(bool matchFormatterOnObjectType)

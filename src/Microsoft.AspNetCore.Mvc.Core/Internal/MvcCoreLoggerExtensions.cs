@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.Formatters.Internal;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging;
+using Microsoft.Net.Http.Headers;
 
 namespace Microsoft.AspNetCore.Mvc.Internal
 {
@@ -51,6 +52,7 @@ namespace Microsoft.AspNetCore.Mvc.Internal
 
         private static readonly Action<ILogger, string, Exception> _objectResultExecuting;
         private static readonly Action<ILogger, string, Exception> _noFormatter;
+        private static readonly Action<ILogger, string, Exception> _invalidAcceptHeader;
         private static readonly Action<ILogger, IOutputFormatter, string, Exception> _formatterSelected;
         private static readonly Action<ILogger, string, Exception> _skippedContentNegotiation;
         private static readonly Action<ILogger, Exception> _noAcceptForNegotiation;
@@ -158,6 +160,12 @@ namespace Microsoft.AspNetCore.Mvc.Internal
                 LogLevel.Warning,
                 1,
                 "No output formatter was found for content type '{ContentType}' to write the response.");
+
+            _invalidAcceptHeader = LoggerMessage.Define<string>(
+                LogLevel.Information,
+                1,
+                "The accept header '{AcceptHeader}' in the request is not valid.");
+
 
             _objectResultExecuting = LoggerMessage.Define<string>(
                 LogLevel.Information,
@@ -374,6 +382,18 @@ namespace Microsoft.AspNetCore.Mvc.Internal
             }
         }
 
+        public static void InvalidAcceptHeader(
+            this ILogger logger,
+            OutputFormatterWriteContext formatterContext,
+            Exception e)
+        {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                var header = formatterContext.HttpContext.Request.Headers[HeaderNames.Accept];
+                _invalidAcceptHeader(logger, header, e);
+            }
+        }
+
         public static void FormatterSelected(
             this ILogger logger,
             IOutputFormatter outputFormatter,
@@ -443,7 +463,7 @@ namespace Microsoft.AspNetCore.Mvc.Internal
                         return new KeyValuePair<string, object>("ActionName", _action.DisplayName);
                     }
                     throw new IndexOutOfRangeException(nameof(index));
-                 }
+                }
             }
 
             public int Count

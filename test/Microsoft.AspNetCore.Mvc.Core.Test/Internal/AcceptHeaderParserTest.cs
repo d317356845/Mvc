@@ -81,5 +81,27 @@ namespace Microsoft.AspNetCore.Mvc.Formatters.Internal
             // Assert
             Assert.Equal(expected, parsed);
         }
+
+        [Theory]
+        [InlineData("/,application/json")]
+        [InlineData("application/json,/")]
+        [InlineData("application/json,*/,text/xml")]
+        [InlineData("application/json,/*,text/xml")]
+        [InlineData("application/json,;q=0.1,text/xml")]
+        [InlineData("application/json, ; q=0.1, text/xml")]
+        [InlineData("application/json, /*; q=0.1, text/xml")]
+        [InlineData("application/json, */; q=0.1 , text/xml")]
+        [InlineData("application/json,  / ; q=0.1, text/xml")]
+        public void TryParseAcceptHeader_ReturnsFalseForInvalidAcceptHeaders(string acceptHeader)
+        {
+            // Arrange
+            var values = new List<MediaTypeSegmentWithQuality>();
+
+            // Act
+            var parsed = AcceptHeaderParser.TryParseAcceptHeader(new List<string> { acceptHeader }, values);
+
+            // Assert
+            Assert.False(parsed);
+        }
     }
 }
